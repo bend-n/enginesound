@@ -8,45 +8,29 @@ GUI Application used to generate purely synthetic engine sounds with advanced op
 It features real-time recording of the engine, a CLI, automatic crossfading to create seamless loops in the CLI, realtime frequency domain display through FFT, and preset saving/loading capabilities.
 """
 
-[features]
-default = ["gui"]
-gui = ["glium", "conrod_core", "conrod_glium", "conrod_winit"]
+[lib]
+crate-type = ["cdylib"]
 
-[profile.release]
-debug = true
+[features]
+default = []
 
 [dependencies]
-# recording #
-hound = "3.4.0"
-crossbeam-channel = "0.5.0"
-chrono = "0.4.19"
+# godot integration #
+godot = { git = "https://github.com/godot-rust/gdextension", branch = "master" }
 
 # saving presets #
-serde = { version = "1.0.118", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
 ron = "0.6.4"
-serde_json = "1.0.61"
-
-# misc #
-parking_lot = "0.11.1"
-
-# gui #
-glium = { version = "0.28.0", optional = true }
-conrod_core = { version = "0.71.0", optional = true }
-conrod_glium = { version = "0.71.0", optional = true }
-conrod_winit = { version = "0.71.0", optional = true }
-winit = "0.23.0"
-native-dialog = "0.5.2"
-
-# fft #
-num-traits = "0.2.14"
-num-complex = "0.3.1"
-rustfft = "4.0.0"
 
 # sound #
 rand_core = "0.6.2"
 rand_xorshift = "0.3.0"
-cpal = "0.13.1"
-paste = "1.0.4"
 
-# cli #
-clap = "2.33.0"
+[profile.release]
+lto = true
+strip = true
+panic = "unwind"
+debug = false
+
+[profile.dev]
+panic = "unwind"

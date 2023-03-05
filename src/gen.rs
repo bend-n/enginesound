@@ -5,8 +5,7 @@
 //! it's output worked upon and then new input samples are `push`ed.
 //!
 
-use crate::recorder::Recorder;
-
+use godot::{engine::AudioStreamGeneratorPlayback, prelude::*};
 use rand_core::{RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
 use serde::{Deserialize, Serialize};
@@ -176,7 +175,6 @@ impl Cylinder {
 }
 
 pub struct Generator {
-    pub(crate) recorder: Option<Recorder>,
     pub volume: f32,
     pub samples_per_second: u32,
     pub engine: Engine,
@@ -191,7 +189,6 @@ pub struct Generator {
 impl Generator {
     pub fn new(samples_per_second: u32, engine: Engine, dc_lp: LowPassFilter) -> Generator {
         Generator {
-            recorder: None,
             volume: 0.1_f32,
             samples_per_second,
             engine,
@@ -201,7 +198,7 @@ impl Generator {
         }
     }
 
-    pub fn generate(&mut self, buf: &mut [f32]) {
+    pub fn generate(&mut self, player: &mut Gd<AudioStreamGeneratorPlayback>) {
         let samples_per_second = self.samples_per_second as f32 * 120.0;
 
         self.recording_currently_clipping = false;
@@ -209,7 +206,7 @@ impl Generator {
 
         let inc = self.engine.rpm / samples_per_second;
 
-        buf.iter_mut().for_each(|sample| {
+        for _ in 0..player.get_frames_available() {
             self.engine.crankshaft_pos = (self.engine.crankshaft_pos + inc).fract();
 
             let channels = self.gen();
@@ -220,18 +217,8 @@ impl Generator {
             self.waveguides_dampened |= channels.3;
 
             // reduces dc offset
-            *sample = mixed - self.dc_lp.filter(mixed);
-        });
-
-        if let Some(recorder) = &mut self.recorder {
-            let bufvec = buf.to_vec();
-            let mut recording_currently_clipping = false;
-            bufvec
-                .iter()
-                .for_each(|sample| recording_currently_clipping |= sample.abs() > 1.0);
-            self.recording_currently_clipping = recording_currently_clipping;
-
-            recorder.record(bufvec);
+            let sample = mixed - self.dc_lp.filter(mixed);
+            player.push_frame(Vector2::splat(sample));
         }
     }
 

@@ -1,7 +1,9 @@
-mod constants;
-pub mod gen;
-mod recorder;
-pub mod utils;
+mod node;
 
-pub use gen::*;
-pub use utils::*;
+pub mod gen;
+pub mod utils;
+pub use godot::prelude::*;
+
+struct Lib;
+#[gdextension]
+unsafe impl ExtensionLibrary for Lib {}
