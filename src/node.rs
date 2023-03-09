@@ -62,4 +62,9 @@ impl EngineNoise {
         self.stream = Some(stream);
         self.update();
     }
+
+    #[func]
+    fn set_volume(&mut self, v: f32) {
+        self.generator.volume = v
+    }
 }
