@@ -43,12 +43,6 @@ macro_rules! fail_cond {
             return;
         }
     };
-    ($cond:expr, $err:expr, $retval:expr) => {
-        if $cond {
-            godot_error!($err);
-            return $retval;
-        }
-    };
 }
 
 #[godot_api]
