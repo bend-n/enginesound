@@ -6,7 +6,6 @@ Extension for godot used to generate purely synthetic engine sounds in real-time
 
 Based on [DasEtwas/enginesound](https://github.com/DasEtwas/enginesound).
 
-> **Warning** Only built for linux so far, when I set up my CI and stuff it will be fine.
 ## installation
 
 - use the [gpm](https://github.com/godot-package-manager/cli) to install
@@ -18,6 +17,10 @@ entry_symbol = "gdext_rust_init"
 [libraries]
 linux.release.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"
 linux.debug.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"
+macos.release = "res://addons/@bendn/enginesound/libenginesound.dylib"
+macos.debug = "res://addons/@bendn/enginesound/libenginesound.dylib"
+windows.debug.x86_64 = "res://addons/@bendn/enginesound/libenginesound.dll"
+windows.release.x86_64 = "res://addons/@bendn/enginesound/libenginesound.dll"
 ```
 
 [^1]: i could include it in the addon but godot doesnt like non toplevel `.gdextension` files.
