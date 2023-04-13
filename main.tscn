@@ -1,0 +1,68 @@
+[gd_scene load_steps=3 format=3 uid="uid://cx41uoueiqdmi"]
+
+[ext_resource type="Script" path="res://test.gd" id="1_fwsqb"]
+
+[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_kl0tw"]
+mix_rate = 30000.0
+buffer_length = 0.05
+
+[node name="c" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="stream" type="AudioStreamPlayer" parent="."]
+stream = SubResource("AudioStreamGenerator_kl0tw")
+
+[node name="generator" type="EngineNoise" parent="stream" node_paths=PackedStringArray("player")]
+script = ExtResource("1_fwsqb")
+player = NodePath("..")
+
+[node name="p" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="c" type="CenterContainer" parent="p"]
+layout_mode = 2
+
+[node name="v" type="VBoxContainer" parent="p/c"]
+layout_mode = 2
+
+[node name="rpm" type="HBoxContainer" parent="p/c/v"]
+layout_mode = 2
+
+[node name="label" type="Label" parent="p/c/v/rpm"]
+layout_mode = 2
+text = "rpm"
+
+[node name="rpm" type="HSlider" parent="p/c/v/rpm"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+min_value = 500.0
+max_value = 8000.0
+value = 500.0
+
+[node name="vol" type="HBoxContainer" parent="p/c/v"]
+layout_mode = 2
+
+[node name="label" type="Label" parent="p/c/v/vol"]
+layout_mode = 2
+text = "volume"
+
+[node name="vol" type="HSlider" parent="p/c/v/vol"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+max_value = 1.0
+step = 0.1
+value = 1.0
+
+[connection signal="value_changed" from="p/c/v/rpm/rpm" to="stream/generator" method="_on_rpm_value_changed"]
+[connection signal="value_changed" from="p/c/v/vol/vol" to="stream/generator" method="_on_vol_value_changed"]
