@@ -1,7 +1,6 @@
 # enginesound
 
 [![version](https://img.shields.io/badge/4.x-blue?logo=godot-engine&logoColor=white&label=godot&style=for-the-badge)](https://godotengine.org "Made with godot")
-[![package](https://img.shields.io/npm/v/@bendn/enginesound?label=version&style=for-the-badge)](https://www.npmjs.com/package/@bendn/enginesound)
 
 Extension for godot used to generate purely synthetic engine sounds in real-time.
 

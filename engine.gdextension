@@ -2,5 +2,5 @@
 entry_symbol = "gdext_rust_init"
 
 [libraries]
-linux.release.x86_64 = "res://addons/enginesound/libenginesound.so"
-linux.debug.x86_64 = "res://addons/enginesound/libenginesound.so"
+linux.release.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"
+linux.debug.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"

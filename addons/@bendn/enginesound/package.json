@@ -1,0 +1,25 @@
+{
+  "name": "@bendn/enginesound",
+  "version": "1.0.0",
+  "description": "extension for godot used to generate purely synthetic engine sounds in real-time.",
+  "main": "libenginesound.so",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bend-n/enginesound.git"
+  },
+  "keywords": [
+    "godot",
+    "godot-engine",
+    "audio",
+    "procedural"
+  ],
+  "author": "bendn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bend-n/enginesound/issues"
+  },
+  "homepage": "https://github.com/bend-n/enginesound#readme"
+}
