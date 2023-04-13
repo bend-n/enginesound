@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://cx41uoueiqdmi"]
 
-[ext_resource type="Script" path="res://test.gd" id="1_fwsqb"]
+[ext_resource type="Script" path="res://test.gd" id="1_g7edu"]
 
-[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_kl0tw"]
-mix_rate = 30000.0
+[sub_resource type="EngineStream" id="EngineStream_3sp0g"]
+mix_rate = 22000.0
 buffer_length = 0.05
 
 [node name="c" type="Control"]
@@ -15,11 +15,8 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="stream" type="AudioStreamPlayer" parent="."]
-stream = SubResource("AudioStreamGenerator_kl0tw")
-
-[node name="generator" type="EngineNoise" parent="stream" node_paths=PackedStringArray("player")]
-script = ExtResource("1_fwsqb")
-player = NodePath("..")
+stream = SubResource("EngineStream_3sp0g")
+script = ExtResource("1_g7edu")
 
 [node name="p" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -64,5 +61,5 @@ max_value = 1.0
 step = 0.1
 value = 1.0
 
-[connection signal="value_changed" from="p/c/v/rpm/rpm" to="stream/generator" method="_on_rpm_value_changed"]
-[connection signal="value_changed" from="p/c/v/vol/vol" to="stream/generator" method="_on_vol_value_changed"]
+[connection signal="value_changed" from="p/c/v/rpm/rpm" to="stream" method="_on_rpm_value_changed"]
+[connection signal="value_changed" from="p/c/v/vol/vol" to="stream" method="_on_vol_value_changed"]
