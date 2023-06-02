@@ -1,12 +1,12 @@
 [package]
 name = "enginesound"
-version = "2.0.0"
+version = "2.0.1"
 authors = ["https://github.com/DasEtwas/"]
 edition = "2018"
 description = "extension for godot used to generate purely synthetic engine sounds in real-time."
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
@@ -22,6 +22,13 @@ ron = "0.6.4"
 # sound #
 rand_core = "0.6.2"
 rand_xorshift = "0.3.0"
+
+[dev-dependencies]
+criterion = { version = "0.4", features = ["html_reports"] }
+
+[[bench]]
+name = "generation"
+harness = false
 
 [profile.release]
 lto = true

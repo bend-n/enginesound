@@ -2,6 +2,23 @@ use crate::gen::{Engine, LoopBuffer, LowPassFilter};
 
 pub const SPEED_OF_SOUND: f32 = 343.0; // m/s
 
+/// faster cos
+#[inline]
+pub fn cos(x: f32) -> f32 {
+    let mut y = x * (1.0 / 6.283); // TAU
+    if y.is_nan() {
+        unsafe { std::hint::unreachable_unchecked() }
+    }
+    y -= 0.25 + (y + 0.25).floor();
+    y *= 16.0 * (y.abs() - 0.5);
+    return y;
+}
+/// faster sin
+#[inline]
+pub fn sin(x: f32) -> f32 {
+    cos(x - 1.570) // FRACT_PI_2
+}
+
 /// converts a given amount of time into samples
 #[inline]
 pub fn seconds_to_samples(seconds: f32, sample_rate: u32) -> usize {

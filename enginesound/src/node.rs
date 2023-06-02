@@ -1,10 +1,10 @@
 use crate::gen::{Generator, LowPassFilter};
 use crate::utils::*;
+use crate::DEFAULT_CONFIG;
 use godot::engine::{
     AudioStreamGenerator, AudioStreamGeneratorPlayback, AudioStreamGeneratorVirtual,
 };
 use godot::prelude::*;
-const DEFAULT_CONFIG: &[u8] = include_bytes!("default.esc");
 
 type Stream = Gd<AudioStreamGeneratorPlayback>;
 

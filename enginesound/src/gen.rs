@@ -11,6 +11,8 @@ use rand_xorshift::XorShiftRng;
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
+use crate::utils::{cos, sin};
+
 pub const PI2F: f32 = 2.0 * std::f32::consts::PI;
 pub const PI4F: f32 = 4.0 * std::f32::consts::PI;
 pub const WAVEGUIDE_MAX_AMP: f32 = 20.0; // at this amplitude, a damping function is applied to fight feedback loops
@@ -62,14 +64,13 @@ pub struct Noise {
 impl Default for Noise {
     fn default() -> Self {
         Noise {
-            inner: XorShiftRng::from_seed(unsafe {
-                std::mem::transmute::<u128, [u8; 16]>(
-                    SystemTime::now()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_nanos(),
-                )
-            }),
+            inner: XorShiftRng::from_seed(
+                SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+                    .to_le_bytes(),
+            ),
         }
     }
 }
@@ -209,12 +210,12 @@ impl Generator {
         for _ in 0..player.get_frames_available() {
             self.engine.crankshaft_pos = (self.engine.crankshaft_pos + inc).fract();
 
-            let channels = self.gen();
-            let mixed = (channels.0 * self.engine.intake_volume
-                + channels.1 * self.engine.engine_vibrations_volume
-                + channels.2 * self.engine.exhaust_volume)
+            let (intake, vibration, exhaust, waveguides) = self.gen();
+            let mixed = (intake * self.engine.intake_volume
+                + vibration * self.engine.engine_vibrations_volume
+                + exhaust * self.engine.exhaust_volume)
                 * self.volume;
-            self.waveguides_dampened |= channels.3;
+            self.waveguides_dampened |= waveguides;
 
             // reduces dc offset
             let sample = mixed - self.dc_lp.filter(mixed);
@@ -258,6 +259,20 @@ impl Generator {
 
         self.engine.exhaust_collector = 0.0;
         self.engine.intake_collector = 0.0;
+    }
+
+    pub fn frame(&mut self) -> f32 {
+        let inc = self.engine.rpm / (self.samples_per_second as f32 * 120.0);
+        self.engine.crankshaft_pos = (self.engine.crankshaft_pos + inc).fract();
+        let (intake, vibration, exhaust, waveguides) = self.gen();
+        let mixed = (intake * self.engine.intake_volume
+            + vibration * self.engine.engine_vibrations_volume
+            + exhaust * self.engine.exhaust_volume)
+            * self.volume;
+        self.waveguides_dampened |= waveguides;
+
+        // reduces dc offset
+        mixed - self.dc_lp.filter(mixed)
     }
 
     /// generates one sample worth of audio
@@ -561,7 +576,7 @@ impl DelayLine {
 
 fn exhaust_valve(crank_pos: f32) -> f32 {
     if 0.75 < crank_pos && crank_pos < 1.0 {
-        -(crank_pos * PI4F).sin()
+        sin(-(crank_pos * PI4F))
     } else {
         0.0
     }
@@ -569,24 +584,24 @@ fn exhaust_valve(crank_pos: f32) -> f32 {
 
 fn intake_valve(crank_pos: f32) -> f32 {
     if 0.0 < crank_pos && crank_pos < 0.25 {
-        (crank_pos * PI4F).sin()
+        sin(crank_pos * PI4F)
     } else {
         0.0
     }
 }
 
 fn piston_motion(crank_pos: f32) -> f32 {
-    (crank_pos * PI4F).cos()
+    cos(crank_pos * PI4F)
 }
 
 fn fuel_ignition(crank_pos: f32, ignition_time: f32) -> f32 {
     /*if 0.0 < crank_pos && crank_pos < ignition_time {
-        (PI2F * (crank_pos * ignition_time + 0.5)).sin()
+        sin(PI2F * (crank_pos * ignition_time + 0.5))
     } else {
         0.0
     }*/
     if 0.5 < crank_pos && crank_pos < ignition_time / 2.0 + 0.5 {
-        (PI2F * ((crank_pos - 0.5) / ignition_time)).sin()
+        sin(PI2F * ((crank_pos - 0.5) / ignition_time))
     } else {
         0.0
     }
