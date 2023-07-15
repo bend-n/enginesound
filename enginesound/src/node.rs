@@ -13,11 +13,12 @@ type Stream = Gd<AudioStreamGeneratorPlayback>;
 #[class(base=AudioStreamGenerator)]
 #[allow(dead_code)]
 pub struct EngineStream {
+    /// if this was set in init() the mix rate would be wrong
     generator: Option<Generator>,
     stream: Option<Stream>,
-    #[export(get, set)]
+    #[var]
     engine_rpm: f32,
-    #[export(get, set)]
+    #[export]
     engine_volume: f32,
     #[base]
     base: Base<AudioStreamGenerator>,

@@ -1,6 +1,11 @@
 [configuration]
 entry_symbol = "gdext_rust_init"
+compatibility_minimum = "4.1.0"
 
 [libraries]
 linux.release.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"
 linux.debug.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"
+macos.release = "res://addons/@bendn/enginesound/libenginesound.dylib"
+macos.debug = "res://addons/@bendn/enginesound/libenginesound.dylib"
+windows.debug.x86_64 = "res://addons/@bendn/enginesound/libenginesound.dll"
+windows.release.x86_64 = "res://addons/@bendn/enginesound/libenginesound.dll"

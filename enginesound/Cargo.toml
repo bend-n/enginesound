@@ -1,6 +1,6 @@
 [package]
 name = "enginesound"
-version = "2.0.1"
+version = "2.0.2"
 authors = ["https://github.com/DasEtwas/"]
 edition = "2018"
 description = "extension for godot used to generate purely synthetic engine sounds in real-time."

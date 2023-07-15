@@ -1,6 +1,6 @@
 # enginesound
 
-[![version](https://img.shields.io/badge/4.x-blue?logo=godot-engine&logoColor=white&label=godot&style=for-the-badge)](https://godotengine.org "Made with godot")
+[![version](https://img.shields.io/badge/4.1+-blue?logo=godot-engine&logoColor=white&label=godot&style=for-the-badge)](https://godotengine.org "Made with godot")
 [![package](https://img.shields.io/npm/v/@bendn/enginesound?label=version&style=for-the-badge)](https://www.npmjs.com/package/@bendn/enginesound)
 
 Extension for godot used to generate purely synthetic engine sounds in real-time.
@@ -14,6 +14,7 @@ Based on [DasEtwas/enginesound](https://github.com/DasEtwas/enginesound).
 ```toml
 [configuration]
 entry_symbol = "gdext_rust_init"
+compatibility_minimum = "4.1.0"
 
 [libraries]
 linux.release.x86_64 = "res://addons/@bendn/enginesound/libenginesound.so"
