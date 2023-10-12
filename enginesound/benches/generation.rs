@@ -1,4 +1,3 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use enginesound::gen::*;
 const RATE: u32 = 42000;
 
@@ -9,16 +8,11 @@ fn gen() -> Generator {
     generator
 }
 
-fn bench_gen(c: &mut Criterion) {
+fn bench_gen() {
     let mut g = gen();
-    c.bench_function("generation", |b| {
-        b.iter(|| {
-            for _ in 0..30000 {
-                black_box(g.frame());
-            }
-        });
-    });
+    for _ in 0..30000 {
+        iai::black_box(g.frame());
+    }
 }
 
-criterion_group!(benches, bench_gen);
-criterion_main!(benches);
+iai::main!(bench_gen);

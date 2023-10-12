@@ -4,7 +4,7 @@
 //! Every sample-output generating object (Cylinder, WaveGuide, DelayLine, ..) has to be first `pop`ped,
 //! it's output worked upon and then new input samples are `push`ed.
 //!
-
+#[cfg(feature = "godot")]
 use godot::{engine::AudioStreamGeneratorPlayback, prelude::*};
 use rand_core::{RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
@@ -355,6 +355,7 @@ impl Generator {
         }
     }
 
+    #[cfg(feature = "godot")]
     pub fn generate(&mut self, player: &mut Gd<AudioStreamGeneratorPlayback>) {
         let samples_per_second = self.samples_per_second as f32 * 120.0;
 
