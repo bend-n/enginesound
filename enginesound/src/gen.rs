@@ -8,7 +8,6 @@
 use godot::{engine::AudioStreamGeneratorPlayback, prelude::*};
 use rand_core::{RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
-use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
 use crate::utils::{cos, sin};
@@ -19,13 +18,13 @@ pub const WAVEGUIDE_MAX_AMP: f32 = 20.0; // at this amplitude, a damping functio
 
 // https://www.researchgate.net/profile/Stefano_Delle_Monache/publication/280086598_Physically_informed_car_engine_sound_synthesis_for_virtual_and_augmented_environments/links/55a791bc08aea2222c746724/Physically-informed-car-engine-sound-synthesis-for-virtual-and-augmented-environments.pdf?origin=publication_detail
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default)]
 pub struct Muffler {
     pub straight_pipe: WaveGuide,
     pub muffler_elements: Vec<WaveGuide>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default)]
 pub struct Engine {
     pub rpm: f32,
     pub intake_volume: f32,
@@ -33,7 +32,7 @@ pub struct Engine {
     pub engine_vibrations_volume: f32,
 
     pub cylinders: Vec<Cylinder>,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub intake_noise: Noise,
     pub intake_noise_factor: f32,
     pub intake_noise_lp: LowPassFilter,
@@ -45,16 +44,173 @@ pub struct Engine {
     pub exhaust_valve_shift: f32,
     pub crankshaft_fluctuation: f32,
     pub crankshaft_fluctuation_lp: LowPassFilter,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub crankshaft_noise: Noise,
     // running values
     /// crankshaft position, 0.0-1.0
-    #[serde(skip)]
+    // #[serde(skip)]
     pub crankshaft_pos: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub exhaust_collector: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub intake_collector: f32,
+}
+
+impl Engine {
+    pub fn new(samples_per_second: u32) -> Self {
+        macro_rules! wave {
+            ($delay:literal, $alpha:literal,$beta:literal) => {
+                WaveGuide::new(
+                    ($delay * samples_per_second as f32) as usize,
+                    $alpha,
+                    $beta,
+                    samples_per_second,
+                )
+            };
+        }
+        macro_rules! lpf {
+            ($len:literal) => {
+                LowPassFilter::new(1.0 / $len, samples_per_second)
+            };
+        }
+        Self {
+            rpm: 883.1155,
+            intake_volume: 0.32493597,
+            exhaust_volume: 0.63871837,
+            engine_vibrations_volume: 0.036345694,
+            cylinders: vec![
+                Cylinder {
+                    crank_offset: 0.0,
+                    exhaust_waveguide: wave!(0.0009583333, 0.7145016, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 0.2054379, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.5,
+                    exhaust_waveguide: wave!(0.0009583333, 0.7145016, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.6666667,
+                    exhaust_waveguide: wave!(0.0009583333, 0.47295976, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.75,
+                    exhaust_waveguide: wave!(0.0009583333, 0.010738671, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.8,
+                    exhaust_waveguide: wave!(0.0009583333, 0.070256054, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.8333333,
+                    exhaust_waveguide: wave!(0.0009583333, 0.2522802, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.85714287,
+                    exhaust_waveguide: wave!(0.0009583333, 0.43368497, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+                Cylinder {
+                    crank_offset: 0.875,
+                    exhaust_waveguide: wave!(0.0009583333, 0.587092, 0.06),
+                    intake_waveguide: wave!(0.00014583333, 1.0, -0.7575827),
+                    extractor_waveguide: wave!(0.0005833333, 0.0, -0.00081294775),
+                    intake_open_refl: 0.00607419,
+                    intake_closed_refl: 1.0,
+                    exhaust_open_refl: -0.00070154667,
+                    exhaust_closed_refl: 0.7145016,
+                    piston_motion_factor: 2.5594783,
+                    ignition_factor: 2.5645223,
+                    ignition_time: 0.102849334,
+                    ..Default::default()
+                },
+            ],
+            intake_noise_factor: 1.3716942,
+            intake_noise_lp: lpf!(0.0005277371),
+            engine_vibration_filter: lpf!(0.010829452),
+            muffler: Muffler {
+                straight_pipe: wave!(0.0064375, 0.0063244104, 0.0016502142),
+                muffler_elements: vec![
+                    wave!(0.00014583333, 0.0, -0.14208126),
+                    wave!(0.0001875, 0.0, -0.14208126),
+                    wave!(0.00020833334, 0.0, -0.14208126),
+                    wave!(0.00025, 0.0, -0.14208126),
+                ],
+            },
+            intake_valve_shift: -0.041683555,
+            exhaust_valve_shift: -0.0046506226,
+            crankshaft_fluctuation: 0.4000154,
+            crankshaft_fluctuation_lp: lpf!(0.086017124),
+            ..Default::default()
+        }
+    }
 }
 
 pub struct Noise {
@@ -95,7 +251,7 @@ impl Noise {
 ///
 /// |EV|    - Exhaust valve modulation function for this side of the WaveGuide (alpha)
 /// ```
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Default)]
 pub struct Cylinder {
     /// offset of this cylinder's piston crank
     pub crank_offset: f32,
@@ -117,9 +273,9 @@ pub struct Cylinder {
     pub ignition_time: f32,
 
     // running values
-    #[serde(skip)]
+    // #[serde(skip)]
     pub cyl_sound: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub extractor_exhaust: f32,
 }
 
@@ -368,7 +524,7 @@ impl Generator {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Default)]
 pub struct WaveGuide {
     // goes from x0 to x1
     pub chamber0: DelayLine,
@@ -380,9 +536,9 @@ pub struct WaveGuide {
     pub beta: f32,
 
     // running values
-    #[serde(skip)]
+    // #[serde(skip)]
     c1_out: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     c0_out: f32,
 }
 
@@ -469,13 +625,13 @@ impl WaveGuide {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Default)]
 pub struct LoopBuffer {
     // in seconds
     pub delay: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub data: Vec<f32>,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub pos: usize,
 }
 
@@ -517,13 +673,13 @@ impl LoopBuffer {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Default)]
 pub struct LowPassFilter {
     /// 1 / cutoff frequency
     pub delay: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub alpha: f32,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub last: f32,
 }
 
@@ -553,7 +709,7 @@ impl LowPassFilter {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Default)]
 pub struct DelayLine {
     pub samples: LoopBuffer,
 }

@@ -1,6 +1,4 @@
-use crate::gen::{Generator, LowPassFilter};
-use crate::utils::*;
-use crate::DEFAULT_CONFIG;
+use crate::gen::{Engine, Generator, LowPassFilter};
 use godot::engine::{
     AudioStreamGenerator, AudioStreamGeneratorPlayback, AudioStreamGeneratorVirtual,
 };
@@ -11,7 +9,6 @@ type Stream = Gd<AudioStreamGeneratorPlayback>;
 /// Procedural engine sound generation
 #[derive(GodotClass)]
 #[class(base=AudioStreamGenerator)]
-#[allow(dead_code)]
 pub struct EngineStream {
     /// if this was set in init() the mix rate would be wrong
     generator: Option<Generator>,
@@ -51,8 +48,7 @@ impl EngineStream {
     /// Creates a generator.
     #[func]
     fn make_engine(&mut self) {
-        let mut engine = ron::de::from_bytes(DEFAULT_CONFIG).expect("default config is invalid");
-        fix_engine(&mut engine, self.base.get_mix_rate() as u32);
+        let engine = Engine::new(self.base.get_mix_rate() as u32);
         let mut generator = Generator::new(
             self.base.get_mix_rate() as u32,
             engine,
