@@ -12,7 +12,7 @@ jobs:
         run: |
           sudo apt-get install -y gcc-mingw-w64 
           rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal
+          rustup toolchain install nightly --profile minimal
           rustup target add x86_64-pc-windows-gnu x86_64-apple-darwin x86_64-unknown-linux-gnu
         shell: bash
 
@@ -32,6 +32,7 @@ jobs:
       - name: build
         run: |
           cd enginesound
+          export RUSTFLAGS="-Ctarget-feature=+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3"
           cargo build --target x86_64-pc-windows-gnu -r
           cargo build --target x86_64-unknown-linux-gnu -r
           export CC=o64-clang; export CXX=o64-clang++; cargo build --target x86_64-apple-darwin -r

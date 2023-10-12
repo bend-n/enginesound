@@ -52,11 +52,11 @@ impl EngineStream {
     #[func]
     fn make_engine(&mut self) {
         let mut engine = ron::de::from_bytes(DEFAULT_CONFIG).expect("default config is invalid");
-        fix_engine(&mut engine, self.get_mix_rate() as u32);
+        fix_engine(&mut engine, self.base.get_mix_rate() as u32);
         let mut generator = Generator::new(
-            self.get_mix_rate() as u32,
+            self.base.get_mix_rate() as u32,
             engine,
-            LowPassFilter::new(0.5, self.get_mix_rate() as u32),
+            LowPassFilter::new(0.5, self.base.get_mix_rate() as u32),
         );
         generator.volume = 1.0;
         self.generator = Some(generator)
