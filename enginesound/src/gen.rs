@@ -10,7 +10,7 @@ use rand_core::{RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
 use std::time::SystemTime;
 
-use crate::utils::{cos, sin};
+use crate::utils::{cos, madd, sin};
 
 pub const PI2F: f32 = 2.0 * std::f32::consts::PI;
 pub const PI4F: f32 = 4.0 * std::f32::consts::PI;
@@ -21,7 +21,7 @@ pub const WAVEGUIDE_MAX_AMP: f32 = 20.0; // at this amplitude, a damping functio
 #[derive(Default)]
 pub struct Muffler {
     pub straight_pipe: WaveGuide,
-    pub muffler_elements: Vec<WaveGuide>,
+    pub muffler_elements: Box<[WaveGuide]>,
 }
 
 #[derive(Default)]
@@ -31,7 +31,7 @@ pub struct Engine {
     pub exhaust_volume: f32,
     pub engine_vibrations_volume: f32,
 
-    pub cylinders: Vec<Cylinder>,
+    pub cylinders: Box<[Cylinder]>,
     // #[serde(skip)]
     pub intake_noise: Noise,
     pub intake_noise_factor: f32,
@@ -191,7 +191,8 @@ impl Engine {
                     ignition_time: 0.102849334,
                     ..Default::default()
                 },
-            ],
+            ]
+            .into(),
             intake_noise_factor: 1.3716942,
             intake_noise_lp: lpf!(0.0005277371),
             engine_vibration_filter: lpf!(0.010829452),
@@ -202,7 +203,8 @@ impl Engine {
                     wave!(0.0001875, 0.0, -0.14208126),
                     wave!(0.00020833334, 0.0, -0.14208126),
                     wave!(0.00025, 0.0, -0.14208126),
-                ],
+                ]
+                .into(),
             },
             intake_valve_shift: -0.041683555,
             exhaust_valve_shift: -0.0046506226,
@@ -283,13 +285,13 @@ impl Cylinder {
     /// takes in the current exhaust collector pressure
     /// returns (intake, exhaust, piston + ignition, waveguide dampened)
     #[inline]
-    pub(in crate::gen) fn pop(
+    fn pop(
         &mut self,
         crank_pos: f32,
         exhaust_collector: f32,
         intake_valve_shift: f32,
         exhaust_valve_shift: f32,
-    ) -> (f32, f32, f32, bool) {
+    ) -> (f32, f32, f32) {
         let crank = (crank_pos + self.crank_offset).fract();
 
         self.cyl_sound = piston_motion(crank) * self.piston_motion_factor
@@ -314,12 +316,7 @@ impl Cylinder {
 
         //self.cyl_sound += ex_wg_ret.0 + in_wg_ret.0;
 
-        (
-            in_wg_ret.1,
-            extractor_wg_ret.1,
-            self.cyl_sound,
-            ex_wg_ret.2 | in_wg_ret.2 | extractor_wg_ret.2,
-        )
+        (in_wg_ret.1, extractor_wg_ret.1, self.cyl_sound)
     }
 
     /// called after pop
@@ -337,10 +334,6 @@ pub struct Generator {
     pub engine: Engine,
     /// `LowPassFilter` which is subtracted from the sample while playing back to reduce dc offset and thus clipping
     dc_lp: LowPassFilter,
-    /// set to true by any waveguide if it is dampening it's output to prevent feedback loops
-    pub waveguides_dampened: bool,
-    /// set to true if the amplitude of the recording is greater than 1
-    pub recording_currently_clipping: bool,
 }
 
 impl Generator {
@@ -350,8 +343,6 @@ impl Generator {
             samples_per_second,
             engine,
             dc_lp,
-            waveguides_dampened: false,
-            recording_currently_clipping: false,
         }
     }
 
@@ -359,20 +350,16 @@ impl Generator {
     pub fn generate(&mut self, player: &mut Gd<AudioStreamGeneratorPlayback>) {
         let samples_per_second = self.samples_per_second as f32 * 120.0;
 
-        self.recording_currently_clipping = false;
-        self.waveguides_dampened = false;
-
         let inc = self.engine.rpm / samples_per_second;
 
         for _ in 0..player.get_frames_available() {
             self.engine.crankshaft_pos = (self.engine.crankshaft_pos + inc).fract();
 
-            let (intake, vibration, exhaust, waveguides) = self.gen();
+            let (intake, vibration, exhaust) = self.gen();
             let mixed = (intake * self.engine.intake_volume
                 + vibration * self.engine.engine_vibrations_volume
                 + exhaust * self.engine.exhaust_volume)
                 * self.volume;
-            self.waveguides_dampened |= waveguides;
 
             // reduces dc offset
             let sample = mixed - self.dc_lp.filter(mixed);
@@ -421,12 +408,11 @@ impl Generator {
     pub fn frame(&mut self) -> f32 {
         let inc = self.engine.rpm / (self.samples_per_second as f32 * 120.0);
         self.engine.crankshaft_pos = (self.engine.crankshaft_pos + inc).fract();
-        let (intake, vibration, exhaust, waveguides) = self.gen();
+        let (intake, vibration, exhaust) = self.gen();
         let mixed = (intake * self.engine.intake_volume
             + vibration * self.engine.engine_vibrations_volume
             + exhaust * self.engine.exhaust_volume)
             * self.volume;
-        self.waveguides_dampened |= waveguides;
 
         // reduces dc offset
         mixed - self.dc_lp.filter(mixed)
@@ -434,7 +420,7 @@ impl Generator {
 
     /// generates one sample worth of audio
     /// returns  `(intake, engine vibrations, exhaust, waveguides dampened)`
-    fn gen(&mut self) -> (f32, f32, f32, bool) {
+    fn gen(&mut self) -> (f32, f32, f32) {
         let intake_noise = self
             .engine
             .intake_noise_lp
@@ -454,10 +440,8 @@ impl Generator {
             .crankshaft_fluctuation_lp
             .filter(self.engine.crankshaft_noise.step());
 
-        let mut cylinder_dampened = false;
-
         for cylinder in self.engine.cylinders.iter_mut() {
-            let (cyl_intake, cyl_exhaust, cyl_vib, dampened) = cylinder.pop(
+            let (cyl_intake, cyl_exhaust, cyl_vib) = cylinder.pop(
                 self.engine.crankshaft_pos
                     + self.engine.crankshaft_fluctuation * crankshaft_fluctuation_offset,
                 last_exhaust_collector,
@@ -469,7 +453,6 @@ impl Generator {
             self.engine.exhaust_collector += cyl_exhaust;
 
             engine_vibration += cyl_vib;
-            cylinder_dampened |= dampened;
         }
 
         // parallel input to the exhaust straight pipe
@@ -477,13 +460,12 @@ impl Generator {
         let straight_pipe_wg_ret = self.engine.muffler.straight_pipe.pop();
 
         // alpha end is at straight pipe end (beta)
-        let mut muffler_wg_ret = (0.0, 0.0, false);
+        let mut muffler_wg_ret = (0.0, 0.0);
 
         for muffler_line in self.engine.muffler.muffler_elements.iter_mut() {
             let ret = muffler_line.pop();
             muffler_wg_ret.0 += ret.0;
             muffler_wg_ret.1 += ret.1;
-            muffler_wg_ret.2 |= ret.2;
         }
 
         // pop  //
@@ -520,7 +502,6 @@ impl Generator {
             self.engine.intake_collector,
             engine_vibration,
             muffler_wg_ret.1,
-            straight_pipe_wg_ret.2 | cylinder_dampened,
         )
     }
 }
@@ -544,6 +525,7 @@ pub struct WaveGuide {
 }
 
 impl WaveGuide {
+    #[inline]
     pub fn new(delay: usize, alpha: f32, beta: f32, samples_per_second: u32) -> WaveGuide {
         WaveGuide {
             chamber0: DelayLine::new(delay, samples_per_second),
@@ -555,32 +537,29 @@ impl WaveGuide {
         }
     }
 
-    pub fn pop(&mut self) -> (f32, f32, bool) {
-        let (c1_out, dampened_c1) = WaveGuide::dampen(self.chamber1.pop());
-        let (c0_out, dampened_c0) = WaveGuide::dampen(self.chamber0.pop());
-        self.c1_out = c1_out;
-        self.c0_out = c0_out;
+    #[inline]
+    pub fn pop(&mut self) -> (f32, f32) {
+        self.c1_out = WaveGuide::dampen(self.chamber1.pop());
+        self.c0_out = WaveGuide::dampen(self.chamber0.pop());
 
         (
             self.c1_out * (1.0 - self.alpha.abs()),
             self.c0_out * (1.0 - self.beta.abs()),
-            dampened_c1 | dampened_c0,
         )
     }
+
     #[inline]
-    pub fn dampen(sample: f32) -> (f32, bool) {
+    pub fn dampen(sample: f32) -> f32 {
         let sample_abs = sample.abs();
         if sample_abs > WAVEGUIDE_MAX_AMP {
-            (
-                sample.signum()
-                    * (-1.0 / (sample_abs - WAVEGUIDE_MAX_AMP + 1.0) + 1.0 + WAVEGUIDE_MAX_AMP),
-                true,
-            )
+            sample.signum()
+                * (-1.0 / (sample_abs - WAVEGUIDE_MAX_AMP + 1.0) + 1.0 + WAVEGUIDE_MAX_AMP)
         } else {
-            (sample, false)
+            sample
         }
     }
 
+    #[inline]
     pub fn push(&mut self, x0_in: f32, x1_in: f32) {
         let c0_in = self.c1_out * self.alpha + x0_in;
         let c1_in = self.c0_out * self.beta + x1_in;
@@ -590,40 +569,6 @@ impl WaveGuide {
         self.chamber0.samples.advance();
         self.chamber1.samples.advance();
     }
-
-    #[allow(clippy::float_cmp)]
-    pub fn get_changed(
-        &mut self,
-        delay: usize,
-        alpha: f32,
-        beta: f32,
-        samples_per_second: u32,
-    ) -> Option<Self> {
-        // the strictly compared values will never change without user interaction (adjusting sliders)
-        if delay != self.chamber0.samples.data.len() || alpha != self.alpha || beta != self.beta {
-            let mut new = Self::new(delay, alpha, beta, samples_per_second);
-
-            // used to reduce artifacts while resizing pipes _a bit_
-            fn copy_samples_faded(source: &[f32], dest: &mut [f32]) {
-                let min_len = source.len().min(dest.len());
-
-                dest[0..min_len].copy_from_slice(&source[0..min_len]);
-                let (a, b) = (*source.last().unwrap(), source[0]);
-                let dest_len = dest.len();
-                dest[min_len..]
-                    .iter_mut()
-                    .enumerate()
-                    .for_each(|(i, x)| *x = a + (b - a) * i as f32 / (dest_len - min_len) as f32);
-            }
-
-            copy_samples_faded(&self.chamber0.samples.data, &mut new.chamber0.samples.data);
-            copy_samples_faded(&self.chamber1.samples.data, &mut new.chamber1.samples.data);
-
-            Some(new)
-        } else {
-            None
-        }
-    }
 }
 
 #[derive(Clone, Default)]
@@ -631,7 +576,7 @@ pub struct LoopBuffer {
     // in seconds
     pub delay: f32,
     // #[serde(skip)]
-    pub data: Vec<f32>,
+    pub data: Box<[f32]>,
     // #[serde(skip)]
     pub pos: usize,
 }
@@ -642,7 +587,7 @@ impl LoopBuffer {
     pub fn new(len: usize, samples_per_second: u32) -> LoopBuffer {
         LoopBuffer {
             delay: len as f32 / samples_per_second as f32,
-            data: vec![0.0; len],
+            data: vec![0.0; len].into(),
             pos: 0,
         }
     }
@@ -695,18 +640,10 @@ impl LowPassFilter {
     }
 
     #[inline]
-    pub fn get_freq(&self) -> f32 {
-        1.0 / self.delay
-    }
-
     pub fn filter(&mut self, sample: f32) -> f32 {
-        let ret = (sample - self.last).mul_add(self.alpha, self.last);
+        let ret = madd(sample - self.last, self.alpha, self.last);
         self.last = ret;
         ret
-    }
-
-    pub fn get_changed(&mut self, freq: f32, samples_per_second: u32) -> Option<Self> {
-        Some(Self::new(freq, samples_per_second))
     }
 }
 

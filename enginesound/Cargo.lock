@@ -25,6 +25,7 @@ dependencies = [
  "iai",
  "rand_core",
  "rand_xorshift",
+ "umath",
 ]
 
 [[package]]
@@ -211,6 +212,12 @@ name = "regex-syntax"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56d84fdd47036b038fc80dd333d10b6aab10d5d31f4a366e20014def75328d33"
+
+[[package]]
+name = "umath"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b132ec85524644f3f167e2f6c8c594ffde66f52bf4d360fefd2bc262385c1ea2"
 
 [[package]]
 name = "unicode-ident"

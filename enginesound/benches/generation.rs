@@ -10,7 +10,9 @@ fn gen() -> Generator {
 
 fn bench_gen() {
     let mut g = gen();
-    for _ in 0..30000 {
+    // 30 seconds worth of sound.
+    // this currently runs in 5510364722 cycles, so you need at least 200MHz to generate 30 seconds of high frequency engine sound.
+    for _ in 0..RATE * 30 {
         iai::black_box(g.frame());
     }
 }
