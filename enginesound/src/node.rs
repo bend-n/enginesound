@@ -55,7 +55,7 @@ impl EngineStream {
             LowPassFilter::new(0.5, self.base.get_mix_rate() as u32),
         );
         generator.volume = 1.0;
-        self.generator = Some(generator)
+        self.generator = Some(generator);
     }
 
     /// Fills the [AudioStreamGeneratorPlayback]'s buffer.

@@ -1,4 +1,4 @@
-use enginesound::gen::*;
+use enginesound::gen::{Engine, Generator, LowPassFilter};
 const RATE: u32 = 42000;
 
 fn gen() -> Generator {

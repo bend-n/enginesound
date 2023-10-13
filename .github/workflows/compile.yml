@@ -13,6 +13,7 @@ jobs:
           sudo apt-get install -y gcc-mingw-w64 
           rustup set auto-self-update disable
           rustup toolchain install nightly --profile minimal
+          rustup default nightly
           rustup target add x86_64-pc-windows-gnu x86_64-apple-darwin x86_64-unknown-linux-gnu
         shell: bash
 
