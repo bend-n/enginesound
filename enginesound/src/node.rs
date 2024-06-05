@@ -1,7 +1,5 @@
 use crate::gen::{Engine, Generator, LowPassFilter};
-use godot::engine::{
-    AudioStreamGenerator, AudioStreamGeneratorPlayback, AudioStreamGeneratorVirtual,
-};
+use godot::engine::{AudioStreamGenerator, AudioStreamGeneratorPlayback, IAudioStreamGenerator};
 use godot::prelude::*;
 
 type Stream = Gd<AudioStreamGeneratorPlayback>;
@@ -17,12 +15,11 @@ pub struct EngineStream {
     engine_rpm: f32,
     #[export]
     engine_volume: f32,
-    #[base]
     base: Base<AudioStreamGenerator>,
 }
 
 #[godot_api]
-impl AudioStreamGeneratorVirtual for EngineStream {
+impl IAudioStreamGenerator for EngineStream {
     fn init(base: Base<AudioStreamGenerator>) -> Self {
         Self {
             generator: None,
@@ -48,11 +45,11 @@ impl EngineStream {
     /// Creates a generator.
     #[func]
     fn make_engine(&mut self) {
-        let engine = Engine::new(self.base.get_mix_rate() as u32);
+        let engine = Engine::new(self.base().get_mix_rate() as u32);
         let mut generator = Generator::new(
-            self.base.get_mix_rate() as u32,
+            self.base().get_mix_rate() as u32,
             engine,
-            LowPassFilter::new(0.5, self.base.get_mix_rate() as u32),
+            LowPassFilter::new(0.5, self.base().get_mix_rate() as u32),
         );
         generator.volume = 1.0;
         self.generator = Some(generator);

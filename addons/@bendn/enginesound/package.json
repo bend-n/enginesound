@@ -1,6 +1,6 @@
 {
   "name": "@bendn/enginesound",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "extension for godot used to generate purely synthetic engine sounds in real-time.",
   "main": "libenginesound.so",
   "scripts": {
