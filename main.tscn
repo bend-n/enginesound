@@ -57,7 +57,7 @@ text = "volume"
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 0
-max_value = 1.0
+max_value = 5.0
 step = 0.1
 value = 1.0
 

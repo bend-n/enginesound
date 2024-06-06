@@ -381,7 +381,7 @@ impl Generator {
                 &mut cyl.extractor_waveguide,
             ]
             .iter_mut()
-            .flat_map(|x| vec![&mut x.chamber0, &mut x.chamber1])
+            .flat_map(|x| [&mut x.chamber0, &mut x.chamber1])
             .for_each(|chamber| chamber.samples.data.iter_mut().for_each(|x| *x = 0.0));
 
             cyl.extractor_exhaust = 0.0;
@@ -389,7 +389,7 @@ impl Generator {
         }
 
         std::iter::once(&mut self.engine.muffler.straight_pipe)
-            .flat_map(|x| vec![&mut x.chamber0, &mut x.chamber1])
+            .flat_map(|x| [&mut x.chamber0, &mut x.chamber1])
             .for_each(|chamber| chamber.samples.data.iter_mut().for_each(|x| *x = 0.0));
 
         for muffler_element in self.engine.muffler.muffler_elements.iter_mut() {

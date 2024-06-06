@@ -12,7 +12,7 @@ func _process(_d: float):
 	strem.update()
 
 func _on_vol_value_changed(value: float) -> void:
-	strem.engine_volume = value
+	volume_db = linear_to_db(value)
 
 func _on_rpm_value_changed(value: float) -> void:
 	strem.engine_rpm = value
