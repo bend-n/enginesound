@@ -10,11 +10,16 @@ jobs:
     steps:
       - name: get toolchains
         run: |
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
           sudo apt-get install -y gcc-mingw-w64 
           rustup set auto-self-update disable
           rustup toolchain install nightly --profile minimal
           rustup default nightly
           rustup target add x86_64-pc-windows-gnu x86_64-apple-darwin x86_64-unknown-linux-gnu
+          wget "https://github.com/bend-n/gd4/raw/main/godot4.xz" -O godot4.xz
+          xz --decompress godot4.xz
+          chmod +x godot4
+          sudo mv godot4 /bin/godot4
         shell: bash
 
       - name: setup osxcross
@@ -25,11 +30,6 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
-      - name: cache rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: cache01
-      
       - name: build
         run: |
           cd enginesound
@@ -37,13 +37,16 @@ jobs:
           cargo build --target x86_64-pc-windows-gnu -r
           cargo build --target x86_64-unknown-linux-gnu -r
           export CC=o64-clang; export CXX=o64-clang++; cargo build --target x86_64-apple-darwin -r
+          mv target/x86_64-apple-darwin/release/libenginesound.dylib .
+          mv target/x86_64-pc-windows-gnu/release/enginesound.dll libenginesound.dll
+          mv target/x86_64-unknown-linux-gnu/release/libenginesound.so .
           ls target/*/release
       
       - name: upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: built
           path: |
-            enginesound/target/*/release/*.so
-            enginesound/target/*/release/*.dll
-            enginesound/target/*/release/*.dylib
+            *.so
+            *.dll
+            *.dylib

@@ -6,7 +6,7 @@ edition = "2018"
 description = "extension for godot used to generate purely synthetic engine sounds in real-time."
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [features]
 godot = ["dep:godot"]
@@ -14,7 +14,7 @@ default = ["godot"]
 
 [dependencies]
 # godot integration #
-godot = { git = "https://github.com/godot-rust/gdextension", branch = "master", optional = true }
+godot = { git = "https://github.com/bend-n/gdext", branch = "docs", optional = true, features = ["custom-godot", "docs"] }
 
 # sound #
 rand_core = "0.6"

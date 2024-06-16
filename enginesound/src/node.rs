@@ -13,6 +13,7 @@ pub struct EngineStream {
     /// if this was set in init() the mix rate would be wrong
     generator: OnceCell<Generator>,
     stream: OnceCell<Stream>,
+    /// The rotations per minute of the engine.
     #[var]
     engine_rpm: f32,
     base: Base<AudioStreamGenerator>,
